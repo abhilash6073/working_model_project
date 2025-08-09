@@ -5,125 +5,169 @@ interface PlacesAPIValidationResult {
   quotaStatus?: 'ok' | 'exceeded' | 'unknown';
   enabledAPIs?: string[];
   suggestions?: string[];
+  backendConfigured?: boolean;
 }
 
 class PlacesAPIValidator {
-  private apiKey: string;
+  private supabaseUrl: string;
+  private supabaseAnonKey: string;
+  private isBackendConfigured: boolean;
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY || '';
+    this.supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    this.supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    this.isBackendConfigured = !!this.supabaseUrl && !!this.supabaseAnonKey && this.supabaseUrl.includes('supabase.co');
   }
 
   async validateConfiguration(): Promise<PlacesAPIValidationResult> {
-    console.log('🔍 Validating Google Places API configuration...');
+    console.log('🔍 Validating Google Places API configuration via Supabase backend...');
     
-    // Check if API key is configured
-    if (!this.apiKey || this.apiKey === 'your_google_places_api_key_here') {
+    // Check if Supabase backend is configured
+    if (!this.isBackendConfigured) {
       return {
         isValid: false,
         isConfigured: false,
-        error: 'Google Places API key not configured',
+        backendConfigured: false,
+        error: 'Supabase backend not configured',
         suggestions: [
-          'Add VITE_GOOGLE_PLACES_API_KEY to your .env file',
-          'Get your API key from Google Cloud Console',
-          'Enable Places API (New) in your Google Cloud project'
+          'Supabase URL and anonymous key are required',
+          'The Google Places API key should be configured in Supabase Edge Functions environment',
+          'Backend handles API calls to avoid CORS issues'
         ]
       };
     }
 
-    // Check API key format
-    if (!this.apiKey.startsWith('AIza')) {
-      return {
-        isValid: false,
-        isConfigured: true,
-        error: 'Invalid Google API key format (should start with "AIza")',
-        suggestions: [
-          'Verify you copied the complete API key',
-          'Make sure it\'s a Google Cloud API key, not a different type'
-        ]
-      };
-    }
-
-    // Test API functionality
+    // Test backend API functionality
     try {
-      console.log('🧪 Testing Places API with a simple query...');
+      console.log('🧪 Testing Places API via Supabase Edge Function...');
       
-      // Test with a simple place search
-      const testUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=restaurant&inputtype=textquery&fields=place_id,name&key=${this.apiKey}`;
+      // Test with the existing places-photos edge function
+      const edgeFunctionUrl = `${this.supabaseUrl}/functions/v1/places-photos`;
       
-      const response = await fetch(testUrl);
-      const data = await response.json();
+      const response = await fetch(edgeFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: 'test restaurant',
+          activityTitle: 'Test Restaurant',
+          location: 'Test City',
+          photoType: 'restaurant'
+        })
+      });
       
-      console.log('📡 Places API Response:', data);
+      console.log('📡 Backend Response Status:', response.status, response.ok ? 'OK' : 'Error');
 
-      if (data.status === 'OK') {
-        return {
-          isValid: true,
-          isConfigured: true,
-          quotaStatus: 'ok',
-          enabledAPIs: ['Places API (New)'],
-          suggestions: [
-            'Google Places API is working correctly!',
-            'You can now get real photos of places and restaurants',
-            'Consider enabling additional APIs like Maps Static API for full functionality'
-          ]
-        };
-      } else if (data.status === 'REQUEST_DENIED') {
+      if (response.ok) {
+        // Check if response is JSON (error/fallback) or image blob (success)
+        const contentType = response.headers.get('Content-Type') || '';
+        
+        if (contentType.includes('application/json')) {
+          const data = await response.json();
+          console.log('📦 Backend JSON response:', data);
+          
+          if (data.success) {
+            return {
+              isValid: true,
+              isConfigured: true,
+              backendConfigured: true,
+              quotaStatus: 'ok',
+              enabledAPIs: ['Places API (New) via Supabase'],
+              suggestions: [
+                'Google Places API is working correctly via Supabase backend!',
+                'You can now get real photos of places and restaurants',
+                'CORS issues are resolved by using the backend'
+              ]
+            };
+          } else if (data.error && data.error.includes('GOOGLE_PLACES_API_KEY not found')) {
+            return {
+              isValid: false,
+              isConfigured: false,
+              backendConfigured: true,
+              error: 'Google Places API key not configured in Supabase environment',
+              suggestions: [
+                'Add GOOGLE_PLACES_API_KEY to Supabase Edge Functions environment variables',
+                'Go to Supabase Dashboard → Settings → Edge Functions → Environment Variables',
+                'Get your API key from Google Cloud Console',
+                'Enable Places API (New) in your Google Cloud project'
+              ]
+            };
+          } else {
+            return {
+              isValid: false,
+              isConfigured: true,
+              backendConfigured: true,
+              error: data.error || 'Backend API error',
+              suggestions: [
+                'Check Supabase Edge Function logs for details',
+                'Verify Google Places API key in Supabase environment',
+                'Ensure Places API (New) is enabled in Google Cloud'
+              ]
+            };
+          }
+        } else if (contentType.includes('image/')) {
+          // Successfully got an image - API is working
+          return {
+            isValid: true,
+            isConfigured: true,
+            backendConfigured: true,
+            quotaStatus: 'ok',
+            enabledAPIs: ['Places API (New) via Supabase'],
+            suggestions: [
+              'Google Places API is working perfectly via Supabase backend!',
+              'Real photos are being fetched successfully',
+              'Full functionality is available'
+            ]
+          };
+        } else {
+          return {
+            isValid: false,
+            isConfigured: true,
+            backendConfigured: true,
+            error: 'Unexpected response type from backend',
+            suggestions: [
+              'Check Supabase Edge Function implementation',
+              'Verify the places-photos function is working correctly'
+            ]
+          };
+        }
+      } else if (response.status === 404) {
         return {
           isValid: false,
-          isConfigured: true,
-          error: 'Places API access denied - API not enabled or key restrictions',
+          isConfigured: false,
+          backendConfigured: true,
+          error: 'Places-photos edge function not found',
           suggestions: [
-            'Enable Places API (New) in Google Cloud Console',
-            'Check API key restrictions (HTTP referrers, IP addresses)',
-            'Verify billing is enabled for your Google Cloud project',
-            'Make sure the API key has Places API permissions'
-          ]
-        };
-      } else if (data.status === 'OVER_QUERY_LIMIT') {
-        return {
-          isValid: true,
-          isConfigured: true,
-          error: 'API quota exceeded, but key is valid',
-          quotaStatus: 'exceeded',
-          suggestions: [
-            'Your API key is valid but you\'ve exceeded the quota',
-            'Check your usage in Google Cloud Console',
-            'Consider upgrading your billing plan',
-            'The app will use fallback images when quota is exceeded'
-          ]
-        };
-      } else if (data.status === 'ZERO_RESULTS') {
-        return {
-          isValid: true,
-          isConfigured: true,
-          quotaStatus: 'ok',
-          suggestions: [
-            'API is working (no results for test query is normal)',
-            'Places API is ready for use!'
+            'The places-photos edge function may not be deployed',
+            'Check Supabase Dashboard → Edge Functions',
+            'Ensure the function is properly deployed'
           ]
         };
       } else {
         return {
           isValid: false,
           isConfigured: true,
-          error: `Places API returned status: ${data.status}`,
+          backendConfigured: true,
+          error: `Backend error: ${response.status} ${response.statusText}`,
           suggestions: [
-            'Check Google Cloud Console for API status',
-            'Verify your API key permissions',
-            'Review Places API documentation'
+            'Check Supabase Edge Function logs',
+            'Verify the places-photos function is working',
+            'Check Google Places API configuration in Supabase environment'
           ]
         };
       }
     } catch (error) {
-      console.error('❌ Places API validation error:', error);
+      console.error('❌ Backend validation error:', error);
       return {
         isValid: false,
-        isConfigured: true,
+        isConfigured: false,
+        backendConfigured: this.isBackendConfigured,
         error: `Network error: ${error.message}`,
         suggestions: [
           'Check your internet connection',
-          'Verify the API key is correct',
+          'Verify Supabase configuration is correct',
           'Try again in a few moments'
         ]
       };
@@ -131,34 +175,49 @@ class PlacesAPIValidator {
   }
 
   async testPhotoFetching(): Promise<{success: boolean, error?: string}> {
-    if (!this.apiKey) {
-      return { success: false, error: 'API key not configured' };
+    if (!this.isBackendConfigured) {
+      return { success: false, error: 'Supabase backend not configured' };
     }
 
     try {
-      console.log('📸 Testing photo fetching capability...');
+      console.log('📸 Testing photo fetching capability via backend...');
       
-      // First, find a place
-      const findPlaceUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=Eiffel Tower Paris&inputtype=textquery&fields=place_id&key=${this.apiKey}`;
-      const findResponse = await fetch(findPlaceUrl);
-      const findData = await findResponse.json();
+      // Test with a well-known location
+      const edgeFunctionUrl = `${this.supabaseUrl}/functions/v1/places-photos`;
       
-      if (findData.status !== 'OK' || !findData.candidates?.length) {
-        return { success: false, error: 'Could not find test location' };
-      }
+      const response = await fetch(edgeFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: 'Eiffel Tower Paris',
+          activityTitle: 'Eiffel Tower',
+          location: 'Paris',
+          photoType: 'activity'
+        })
+      });
       
-      const placeId = findData.candidates[0].place_id;
-      
-      // Get place details with photos
-      const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=photo&key=${this.apiKey}`;
-      const detailsResponse = await fetch(detailsUrl);
-      const detailsData = await detailsResponse.json();
-      
-      if (detailsData.status === 'OK' && detailsData.result?.photos?.length > 0) {
-        console.log('✅ Photo fetching test successful');
-        return { success: true };
+      if (response.ok) {
+        const contentType = response.headers.get('Content-Type') || '';
+        
+        if (contentType.includes('image/')) {
+          console.log('✅ Photo fetching test successful - got real image');
+          return { success: true };
+        } else if (contentType.includes('application/json')) {
+          const data = await response.json();
+          if (data.success && data.photoUrl) {
+            console.log('✅ Photo fetching test successful - got photo URL');
+            return { success: true };
+          } else {
+            return { success: false, error: data.error || 'No photos available for test location' };
+          }
+        } else {
+          return { success: false, error: 'Unexpected response type' };
+        }
       } else {
-        return { success: false, error: 'No photos available for test location' };
+        return { success: false, error: `Backend error: ${response.status}` };
       }
     } catch (error) {
       return { success: false, error: error.message };
@@ -167,24 +226,30 @@ class PlacesAPIValidator {
 
   getSetupInstructions(): string[] {
     return [
-      '1. Go to Google Cloud Console (https://console.cloud.google.com/)',
-      '2. Create a new project or select an existing one',
-      '3. Enable billing for your project (required for Places API)',
-      '4. Go to APIs & Services > Library',
-      '5. Search for "Places API (New)" and enable it',
-      '6. Go to APIs & Services > Credentials',
-      '7. Click "Create Credentials" > "API Key"',
-      '8. Copy the API key and add it to your .env file as VITE_GOOGLE_PLACES_API_KEY',
-      '9. (Optional) Restrict the API key to specific APIs and domains for security',
-      '10. Restart your development server'
+      '1. Get Google Places API Key:',
+      '   • Go to Google Cloud Console (https://console.cloud.google.com/)',
+      '   • Create a new project or select an existing one',
+      '   • Enable billing for your project (required for Places API)',
+      '   • Go to APIs & Services > Library',
+      '   • Search for "Places API (New)" and enable it',
+      '   • Go to APIs & Services > Credentials',
+      '   • Click "Create Credentials" > "API Key"',
+      '2. Configure Supabase Backend:',
+      '   • Go to Supabase Dashboard → Settings → Edge Functions',
+      '   • Add Environment Variable: GOOGLE_PLACES_API_KEY',
+      '   • Set the value to your Google Places API key',
+      '   • The places-photos edge function will use this key',
+      '3. Verify Configuration:',
+      '   • Use the test button to verify everything works',
+      '   • Backend handles all API calls to avoid CORS issues'
     ];
   }
 
-  getCurrentStatus(): {configured: boolean, keyFormat: string, keyLength: number} {
+  getCurrentStatus(): {backendConfigured: boolean, supabaseUrl: string, hasAnonKey: boolean} {
     return {
-      configured: !!this.apiKey && this.apiKey !== 'your_google_places_api_key_here',
-      keyFormat: this.apiKey ? (this.apiKey.startsWith('AIza') ? 'Valid format' : 'Invalid format') : 'Not set',
-      keyLength: this.apiKey ? this.apiKey.length : 0
+      backendConfigured: this.isBackendConfigured,
+      supabaseUrl: this.supabaseUrl ? this.supabaseUrl.substring(0, 30) + '...' : 'Not configured',
+      hasAnonKey: !!this.supabaseAnonKey
     };
   }
 }

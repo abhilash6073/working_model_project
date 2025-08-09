@@ -36,28 +36,28 @@ const PlacesAPISetup: React.FC = () => {
   const getStatusIcon = () => {
     if (isValidating) return <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />;
     if (validationResult?.isValid) return <CheckCircle className="w-6 h-6 text-green-500" />;
-    if (validationResult?.isConfigured) return <AlertCircle className="w-6 h-6 text-yellow-500" />;
+    if (validationResult?.backendConfigured) return <AlertCircle className="w-6 h-6 text-yellow-500" />;
     return <XCircle className="w-6 h-6 text-red-500" />;
   };
 
   const getStatusColor = () => {
     if (validationResult?.isValid) return 'border-green-200 bg-green-50';
-    if (validationResult?.isConfigured) return 'border-yellow-200 bg-yellow-50';
+    if (validationResult?.backendConfigured) return 'border-yellow-200 bg-yellow-50';
     return 'border-red-200 bg-red-50';
   };
 
   const getStatusText = () => {
     if (isValidating) return 'Validating API...';
-    if (validationResult?.isValid) return 'Google Places API - Fully Functional';
-    if (validationResult?.isConfigured) return 'Google Places API - Configured but Not Working';
-    return 'Google Places API - Not Configured';
+    if (validationResult?.isValid) return 'Google Places API via Supabase - Fully Functional';
+    if (validationResult?.backendConfigured) return 'Supabase Backend - Configured, Places API Needs Setup';
+    return 'Supabase Backend - Not Configured';
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-xl">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Google Places API Configuration</h2>
-        <p className="text-gray-600">Configure Google Places API to get real photos of places and restaurants</p>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Google Places API via Supabase Backend</h2>
+        <p className="text-gray-600">Configure Google Places API through Supabase backend to get real photos and avoid CORS issues</p>
       </div>
 
       {/* Current Status */}
@@ -68,7 +68,9 @@ const PlacesAPISetup: React.FC = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-800">{getStatusText()}</h3>
               <p className="text-sm text-gray-600">
-                Key Format: {currentStatus.keyFormat} | Length: {currentStatus.keyLength} characters
+                Backend: {currentStatus.backendConfigured ? 'Configured' : 'Not Configured'} | 
+                Supabase: {currentStatus.supabaseUrl} | 
+                Auth: {currentStatus.hasAnonKey ? 'Ready' : 'Missing'}
               </p>
             </div>
           </div>
@@ -88,7 +90,14 @@ const PlacesAPISetup: React.FC = () => {
           <div className="space-y-3">
             {validationResult.error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-sm text-red-700 font-medium">Error: {validationResult.error}</p>
+                <p className="text-sm text-red-700 font-medium">
+                  <strong>Error:</strong> {validationResult.error}
+                </p>
+                {!validationResult.backendConfigured && (
+                  <p className="text-sm text-red-600 mt-2">
+                    <strong>Note:</strong> Supabase backend is required to avoid CORS issues with Google Places API
+                  </p>
+                )}
               </div>
             )}
 
@@ -116,7 +125,7 @@ const PlacesAPISetup: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Image className="w-4 h-4" />
                   <span className="font-medium text-sm">
-                    Photo Fetching: {photoTestResult.success ? 'Working' : 'Limited'}
+                    Photo Fetching via Backend: {photoTestResult.success ? 'Working' : 'Limited'}
                   </span>
                 </div>
                 {photoTestResult.error && (
@@ -126,17 +135,39 @@ const PlacesAPISetup: React.FC = () => {
             )}
 
             {/* Quota Status */}
-            {validationResult.quotaStatus && (
+            {validationResult.quotaStatus && validationResult.backendConfigured && (
               <div className={`p-3 rounded-lg border ${
                 validationResult.quotaStatus === 'ok' 
                   ? 'bg-green-50 border-green-200' 
                   : 'bg-orange-50 border-orange-200'
               }`}>
                 <p className="text-sm font-medium">
-                  Quota Status: {validationResult.quotaStatus === 'ok' ? 'Available' : 'Exceeded'}
+                  Backend API Status: {validationResult.quotaStatus === 'ok' ? 'Available' : 'Limited'}
                 </p>
               </div>
             )}
+
+            {/* Backend Status */}
+            <div className={`p-3 rounded-lg border ${
+              validationResult.backendConfigured 
+                ? 'bg-blue-50 border-blue-200' 
+                : 'bg-red-50 border-red-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  validationResult.backendConfigured ? 'bg-blue-500' : 'bg-red-500'
+                }`}></div>
+                <span className="text-sm font-medium">
+                  Supabase Backend: {validationResult.backendConfigured ? 'Connected' : 'Not Configured'}
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 mt-1">
+                {validationResult.backendConfigured 
+                  ? 'Using backend to avoid CORS issues with Google APIs'
+                  : 'Backend required for Google Places API integration'
+                }
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -148,10 +179,10 @@ const PlacesAPISetup: React.FC = () => {
         }`}>
           <div className="flex items-center gap-2 mb-2">
             <Image className={`w-5 h-5 ${validationResult?.isValid ? 'text-green-600' : 'text-gray-400'}`} />
-            <span className="font-medium">Real Photos</span>
+            <span className="font-medium">Real Photos via Backend</span>
           </div>
           <p className="text-sm text-gray-600">
-            {validationResult?.isValid ? 'Get actual photos of places and restaurants' : 'Using fallback images'}
+            {validationResult?.isValid ? 'Get actual photos via Supabase backend (no CORS issues)' : 'Using fallback images'}
           </p>
         </div>
 
@@ -172,10 +203,10 @@ const PlacesAPISetup: React.FC = () => {
         }`}>
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className={`w-5 h-5 ${validationResult?.isValid ? 'text-green-600' : 'text-gray-400'}`} />
-            <span className="font-medium">Quality</span>
+            <span className="font-medium">CORS-Free Integration</span>
           </div>
           <p className="text-sm text-gray-600">
-            {validationResult?.isValid ? 'High-quality, verified content' : 'Standard quality content'}
+            {validationResult?.isValid ? 'Backend handles all API calls securely' : 'Direct API calls blocked by CORS'}
           </p>
         </div>
       </div>
@@ -198,15 +229,21 @@ const PlacesAPISetup: React.FC = () => {
               <div className="flex items-start gap-3">
                 <Key className="w-5 h-5 text-blue-600 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-blue-800 mb-2">Step-by-Step Setup:</h4>
-                  <ol className="space-y-2 text-sm text-blue-700">
+                  <h4 className="font-medium text-blue-800 mb-2">Backend Setup (Avoids CORS Issues):</h4>
+                  <div className="space-y-3 text-sm text-blue-700">
                     {setupInstructions.map((instruction, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="font-medium min-w-[20px]">{index + 1}.</span>
-                        <span>{instruction.replace(/^\d+\.\s*/, '')}</span>
-                      </li>
+                      <div key={index}>
+                        {instruction.startsWith('   •') ? (
+                          <div className="ml-4 flex items-start gap-2">
+                            <span className="text-blue-400">•</span>
+                            <span>{instruction.substring(4)}</span>
+                          </div>
+                        ) : (
+                          <div className="font-medium text-blue-800">{instruction}</div>
+                        )}
+                      </div>
                     ))}
-                  </ol>
+                  </div>
                 </div>
               </div>
             </div>
@@ -223,13 +260,13 @@ const PlacesAPISetup: React.FC = () => {
               </a>
               
               <a
-                href="https://console.cloud.google.com/apis/library/places-backend.googleapis.com"
+                href="https://supabase.com/dashboard"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
-                Enable Places API
+                Supabase Dashboard
               </a>
             </div>
           </div>
@@ -238,10 +275,13 @@ const PlacesAPISetup: React.FC = () => {
 
       {/* Current .env Configuration */}
       <div className="mt-6 bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm">
-        <div className="mb-2 text-gray-400"># Add this to your .env file:</div>
-        <div>VITE_GOOGLE_PLACES_API_KEY={currentStatus.configured ? '***configured***' : 'your_actual_api_key_here'}</div>
+        <div className="mb-2 text-gray-400"># Your .env file should have:</div>
+        <div>VITE_SUPABASE_URL={currentStatus.backendConfigured ? '***configured***' : 'your_supabase_url_here'}</div>
+        <div>VITE_SUPABASE_ANON_KEY={currentStatus.hasAnonKey ? '***configured***' : 'your_supabase_anon_key_here'}</div>
+        <div className="mt-2 text-gray-400"># In Supabase Dashboard → Edge Functions → Environment Variables:</div>
+        <div>GOOGLE_PLACES_API_KEY=your_actual_google_places_api_key_here</div>
         <div className="mt-2 text-gray-400 text-xs">
-          Remember to restart your development server after adding the API key
+          Backend configuration avoids CORS issues with Google APIs
         </div>
       </div>
     </div>
