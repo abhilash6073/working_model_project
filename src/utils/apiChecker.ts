@@ -117,32 +117,54 @@ class APIChecker {
   }
 
   private async checkGoogleMapsAPI(): Promise<void> {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
     const status: APIStatus = {
-      name: 'Google Maps Static API',
-      configured: !!apiKey && apiKey !== 'your_google_maps_api_key_here' && apiKey.startsWith('AIza'),
+      name: 'Google Maps Static API (via Supabase)',
+      configured: !!supabaseUrl && !!supabaseAnonKey && supabaseUrl.includes('supabase.co'),
       valid: false,
-      functionality: 'Static map images for locations',
-      setupUrl: 'https://console.cloud.google.com/apis/credentials'
+      functionality: 'Static map images for locations via backend',
+      setupUrl: 'https://supabase.com/dashboard'
     };
 
     if (!status.configured) {
-      status.error = 'API key not configured or invalid format';
+      status.error = 'Supabase backend not configured';
       this.results.push(status);
       return;
     }
 
     try {
-      // Test with a simple static map request
-      const testUrl = `https://maps.googleapis.com/maps/api/staticmap?center=0,0&zoom=1&size=100x100&key=${apiKey}`;
-      const response = await fetch(testUrl);
+      // Test with the maps-static edge function
+      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/maps-static`;
+      
+      const response = await fetch(edgeFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          location: 'Test Location',
+          title: 'Test Map',
+          width: 100,
+          height: 100,
+          zoom: 1
+        })
+      });
       
       if (response.ok) {
-        status.valid = true;
-      } else if (response.status === 403) {
-        status.error = 'API key invalid or Maps Static API not enabled';
+        const contentType = response.headers.get('Content-Type') || '';
+        
+        if (contentType.includes('image/') || contentType.includes('application/json')) {
+          status.valid = true;
+        } else {
+          status.error = 'Unexpected response from backend';
+        }
+      } else if (response.status === 404) {
+        status.error = 'Maps-static edge function not found';
       } else {
-        status.error = `HTTP error: ${response.status}`;
+        status.error = `Backend error: ${response.status}`;
       }
     } catch (error) {
       status.error = `Network error: ${error.message}`;

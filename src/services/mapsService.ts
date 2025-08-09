@@ -6,31 +6,38 @@ interface MapImageOptions {
   markers?: boolean;
 }
 
+interface MapResponse {
+  success: boolean;
+  mapUrl?: string;
+  fallbackUrl?: string;
+  error?: string;
+  source: 'google_maps' | 'fallback';
+}
+
 class MapsService {
-  private apiKey: string;
+  private supabaseUrl: string;
+  private supabaseAnonKey: string;
   private isConfigured: boolean;
-  private baseUrl: string;
+  private cache: Map<string, string>;
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-    this.baseUrl = 'https://maps.googleapis.com/maps/api/staticmap';
-    this.isConfigured = !!this.apiKey && 
-                       this.apiKey !== 'your_actual_google_maps_api_key_here' && 
-                       this.apiKey !== 'AIzaSyCmxSMfFvDyYqp6jKlc-gOMjJ-GoehhtWY' &&
-                       this.apiKey.length > 20 &&
-                       this.apiKey.startsWith('AIza');
+    this.supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    this.supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    this.isConfigured = !!this.supabaseUrl && !!this.supabaseAnonKey && this.supabaseUrl.includes('supabase.co');
+    this.cache = new Map();
     
-    console.log('🗺️ Google Maps Service Configuration:');
-    console.log('- API Key present:', !!this.apiKey);
-    console.log('- API Key length:', this.apiKey.length);
-    console.log('- API Key format valid:', this.apiKey.startsWith('AIza'));
+    console.log('🗺️ Maps Service Configuration (Backend):');
+    console.log('- Supabase URL present:', !!this.supabaseUrl);
+    console.log('- Supabase URL valid:', this.supabaseUrl.includes('supabase.co'));
+    console.log('- Supabase Anon Key present:', !!this.supabaseAnonKey);
     console.log('- Is configured:', this.isConfigured);
     
     if (!this.isConfigured) {
-      console.warn('⚠️ Google Maps API key invalid or not configured. Using fallback images.');
-      console.warn('📝 Please set a valid VITE_GOOGLE_MAPS_API_KEY in your .env file');
+      console.warn('⚠️ Supabase backend not configured for Maps API. Using fallback images.');
+      console.warn('📝 Please configure Supabase URL and anonymous key in your .env file');
+      console.warn('📝 Add GOOGLE_MAPS_API_KEY to Supabase Edge Functions environment variables');
     } else {
-      console.log('✅ Google Maps Static API ready');
+      console.log('✅ Maps Service ready with Supabase backend integration');
     }
   }
 
@@ -38,63 +45,80 @@ class MapsService {
     return this.isConfigured;
   }
 
-  generateStaticMapUrl(location: string, title: string, options: MapImageOptions = {}): string {
+  async generateStaticMapUrl(location: string, title: string, options: MapImageOptions = {}): Promise<string> {
     console.log('🗺️ Generating map for:', { location, title, isConfigured: this.isConfigured });
     
+    const cacheKey = `${location}-${title}-${JSON.stringify(options)}`;
+    
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey)!;
+    }
+    
     if (!this.isConfigured) {
-      console.log('⚠️ Google Maps not configured, using fallback');
-      return this.getFallbackImage(title, location);
+      console.log('⚠️ Supabase backend not configured, using fallback');
+      const fallbackUrl = this.getFallbackImage(title, location);
+      this.cache.set(cacheKey, fallbackUrl);
+      return fallbackUrl;
     }
 
-    const {
-      width = 600,
-      height = 400,
-      zoom = 15,
-      mapType = 'roadmap',
-      markers = true
-    } = options;
+    try {
+      console.log('🗺️ Calling Supabase Edge Function for map:', title);
+      
+      const edgeFunctionUrl = `${this.supabaseUrl}/functions/v1/maps-static`;
+      console.log('🔗 Maps Edge Function URL:', edgeFunctionUrl);
 
-    // Clean and encode the location
-    const cleanLocation = this.cleanLocation(location, title);
-    const encodedLocation = encodeURIComponent(cleanLocation);
+      const response = await fetch(edgeFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          location,
+          title,
+          ...options
+        })
+      });
 
-    let url = `${this.baseUrl}?`;
-    url += `center=${encodedLocation}`;
-    url += `&zoom=${zoom}`;
-    url += `&size=${width}x${height}`;
-    url += `&maptype=${mapType}`;
-    url += `&scale=2`; // High DPI for better quality
-    
-    if (markers) {
-      url += `&markers=color:red%7Clabel:📍%7C${encodedLocation}`;
+      console.log('📡 Supabase maps response status:', response.status, response.ok ? 'OK' : 'Error');
+
+      if (!response.ok) {
+        throw new Error(`Supabase Maps Edge Function error: ${response.status}`);
+      }
+
+      // Check if response is JSON (error/fallback) or image blob (success)
+      const contentType = response.headers.get('Content-Type') || '';
+      
+      if (contentType.includes('application/json')) {
+        // Handle JSON response (error or fallback)
+        const data: MapResponse = await response.json();
+        console.log('📦 Supabase Maps JSON response:', data);
+        
+        const mapUrl = data.mapUrl || data.fallbackUrl || this.getFallbackImage(title, location);
+        this.cache.set(cacheKey, mapUrl);
+        return mapUrl;
+      } else if (contentType.includes('image/')) {
+        // Handle image blob response (success)
+        const imageBlob = await response.blob();
+        const blobUrl = URL.createObjectURL(imageBlob);
+        console.log('✅ Successfully created blob URL for real map');
+        this.cache.set(cacheKey, blobUrl);
+        return blobUrl;
+      } else {
+        throw new Error('Unexpected response type');
+      }
+
+    } catch (error) {
+      console.error('❌ Error calling Supabase Maps Edge Function:', error);
+      const fallbackUrl = this.getFallbackImage(title, location);
+      this.cache.set(cacheKey, fallbackUrl);
+      return fallbackUrl;
     }
-    
-    // Add styling for better appearance
-    url += `&style=feature:poi%7Celement:labels%7Cvisibility:on`;
-    url += `&style=feature:landscape%7Celement:geometry%7Csaturation:-100`;
-    
-    url += `&key=${this.apiKey}`;
-
-    console.log('🗺️ Generated Maps URL:', url);
-    return url;
   }
 
   generateSearchUrl(location: string, title: string): string {
     const query = encodeURIComponent(`${title} ${location}`);
     return `https://www.google.com/maps/search/?api=1&query=${query}`;
-  }
-
-  private cleanLocation(location: string, title: string): string {
-    // Combine title and location for better search results
-    let searchQuery = `${title}, ${location}`;
-    
-    // Remove common prefixes and clean up
-    searchQuery = searchQuery
-      .replace(/^(Visit|Explore|Discover)\s+/i, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    return searchQuery;
   }
 
   private getFallbackImage(title: string, location: string): string {
@@ -150,16 +174,20 @@ class MapsService {
   }
 
   // Generate different map styles for variety
-  generateMapVariations(location: string, title: string): {
+  async generateMapVariations(location: string, title: string): Promise<{
     roadmap: string;
     satellite: string;
     terrain: string;
-  } {
+  }> {
     return {
-      roadmap: this.generateStaticMapUrl(location, title, { mapType: 'roadmap', zoom: 15 }),
-      satellite: this.generateStaticMapUrl(location, title, { mapType: 'satellite', zoom: 16 }),
-      terrain: this.generateStaticMapUrl(location, title, { mapType: 'terrain', zoom: 14 })
+      roadmap: await this.generateStaticMapUrl(location, title, { mapType: 'roadmap', zoom: 15 }),
+      satellite: await this.generateStaticMapUrl(location, title, { mapType: 'satellite', zoom: 16 }),
+      terrain: await this.generateStaticMapUrl(location, title, { mapType: 'terrain', zoom: 14 })
     };
+  }
+
+  clearCache(): void {
+    this.cache.clear();
   }
 }
 

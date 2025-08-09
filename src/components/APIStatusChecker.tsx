@@ -155,7 +155,7 @@ const APIStatusChecker: React.FC = () => {
             <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
               Google Cloud Console
             </a>{' '}
-            and enable Places API and Maps Static API
+            to get API keys, then add them to Supabase Edge Functions environment variables
           </div>
           <div>
             <span className="font-medium">3. Supabase (Optional):</span> Visit{' '}
@@ -167,7 +167,7 @@ const APIStatusChecker: React.FC = () => {
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <p className="text-blue-800">
               <span className="font-medium">💡 Tip:</span> Add your API keys to the <code>.env</code> file and restart the development server.
-              The app will work in demo mode without API keys, but with limited functionality.
+              For Google APIs, add keys to Supabase Edge Functions environment variables to avoid CORS issues.
             </p>
           </div>
         </div>
