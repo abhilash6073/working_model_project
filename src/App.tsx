@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import APIStatusChecker from './components/APIStatusChecker';
 import Hero from './components/Hero';
 import TravelInfoForm from './components/TravelInfoForm';
 import PreferencesForm from './components/PreferencesForm';
@@ -8,7 +9,7 @@ import { aiService } from './services/aiService';
 import { generateMockItinerary } from './utils/mockData';
 import type { TravelInfo, TripPreferences, TripPlan } from './types';
 
-type AppStep = 'hero' | 'travel-info' | 'preferences' | 'itinerary';
+type AppStep = 'hero' | 'api-check' | 'travel-info' | 'preferences' | 'itinerary';
 
 function App() {
   const [currentStep, setCurrentStep] = useState<AppStep>('hero');
@@ -35,6 +36,10 @@ function App() {
   const [tripPlan, setTripPlan] = useState<TripPlan | null>(null);
 
   const handleStartPlanning = () => {
+    setCurrentStep('api-check');
+  };
+
+  const handleAPICheckComplete = () => {
     setCurrentStep('travel-info');
   };
 
@@ -284,6 +289,24 @@ function App() {
         <Hero onGetStarted={handleStartPlanning} />
       )}
 
+      {currentStep === 'api-check' && (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 py-12 px-4">
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl font-bold text-white mb-4">API Configuration Check</h1>
+            <p className="text-white/80 mb-6">Let's verify your API keys for full functionality</p>
+          </div>
+          <APIStatusChecker />
+          <div className="mt-8 text-center">
+            <button
+              onClick={handleAPICheckComplete}
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              Continue to Trip Planning →
+            </button>
+          </div>
+        </div>
+      )}
+
       {currentStep === 'travel-info' && (
         <div className="min-h-screen py-12 px-4">
           <TravelInfoForm
@@ -336,11 +359,11 @@ function App() {
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-8">
                 <div className={`flex items-center gap-2 ${
-                  currentStep === 'travel-info' ? 'text-blue-600' : 
+                  ['travel-info'].includes(currentStep) ? 'text-blue-600' : 
                   ['preferences', 'itinerary'].includes(currentStep) ? 'text-emerald-600' : 'text-slate-400'
                 }`}>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    currentStep === 'travel-info' ? 'bg-blue-100' : 
+                    ['travel-info'].includes(currentStep) ? 'bg-blue-100' : 
                     ['preferences', 'itinerary'].includes(currentStep) ? 'bg-emerald-100' : 'bg-slate-100'
                   }`}>
                     {['preferences', 'itinerary'].includes(currentStep) ? '✓' : '1'}
