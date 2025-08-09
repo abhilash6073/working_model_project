@@ -21,7 +21,17 @@ const PreferencesForm: React.FC<PreferencesFormProps> = ({ data, onUpdate, onNex
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-2xl shadow-xl">
+    <div className="min-h-screen relative py-12 px-4" style={{
+      backgroundImage: `url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundAttachment: 'fixed'
+    }}>
+      {/* Subtle overlay for readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-amber-50/40 via-orange-50/30 to-blue-50/40"></div>
+      
+      <div className="max-w-3xl mx-auto relative bg-white/85 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 p-8">
       <div className="mb-8 text-center">
         <h2 className="text-3xl font-bold text-gray-800 mb-2">🌍 Trip Preferences</h2>
         <p className="text-gray-600">Tell us what makes your perfect trip</p>
@@ -154,6 +164,7 @@ const PreferencesForm: React.FC<PreferencesFormProps> = ({ data, onUpdate, onNex
           Generate My Trip ✨
         </button>
       </div>
+    </div>
     </div>
   );
 };

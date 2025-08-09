@@ -134,18 +134,27 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 py-12 px-4">
+    <div className="min-h-screen relative py-12 px-4" style={{
+      backgroundImage: `url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundAttachment: 'fixed'
+    }}>
+      {/* Subtle overlay for readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-amber-50/40 via-orange-50/30 to-blue-50/40"></div>
+      
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 p-8">
+        <div className="relative bg-white/85 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 p-8">
           <div className="mb-8 text-center">
-            <h2 className="text-3xl font-bold text-white mb-2">Travel Information</h2>
-            <p className="text-white/80">Let's start with the basics of your trip</p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Travel Information</h2>
+            <p className="text-gray-600">Let's start with the basics of your trip</p>
           </div>
 
           <div className="space-y-6">
             {/* Destination */}
             <div>
-              <label className="block text-sm font-medium text-white mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <MapPin className="inline w-4 h-4 mr-1" />
                 Where are you going?
               </label>
@@ -157,7 +166,7 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
                   onFocus={handleInputFocus}
                   onBlur={handleInputBlur}
                   placeholder="Type or select a destination..."
-                  className="w-full p-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/60 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 backdrop-blur-sm pr-10"
+                  className="w-full p-4 bg-white/70 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 backdrop-blur-sm pr-10"
                 />
                 
                 {isSearching && (
@@ -167,14 +176,14 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
                 )}
                 
                 {showSuggestions && !isSearching && (
-                  <div className="absolute z-10 w-full mt-1 bg-slate-800/95 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl max-h-80 overflow-y-auto">
-                    <div className="p-3 border-b border-white/10">
+                  <div className="absolute z-10 w-full mt-1 bg-white/95 backdrop-blur-md border border-gray-200 rounded-xl shadow-2xl max-h-80 overflow-y-auto">
+                    <div className="p-3 border-b border-gray-200">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium text-white/80">
+                        <h4 className="text-sm font-medium text-gray-700">
                           🤖 AI Suggestions ({suggestions.length} found)
                         </h4>
                         {destinationService.constructor.name && (
-                          <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
                             AI-Powered
                           </span>
                         )}
@@ -186,8 +195,8 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
                         {/* Popular Destinations */}
                         {categorizedSuggestions.popular.length > 0 && (
                           <div>
-                            <div className="px-3 py-2 bg-white/5 border-b border-white/10">
-                              <span className="text-xs font-medium text-white/60 uppercase tracking-wide">
+                            <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
+                              <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                                 ⭐ Popular Destinations
                               </span>
                             </div>
@@ -205,8 +214,8 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
                         {categorizedSuggestions.other.length > 0 && (
                           <div>
                             {categorizedSuggestions.popular.length > 0 && (
-                              <div className="px-3 py-2 bg-white/5 border-b border-white/10">
-                                <span className="text-xs font-medium text-white/60 uppercase tracking-wide">
+                              <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
+                                <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                                   🌍 More Destinations
                                 </span>
                               </div>
@@ -223,12 +232,12 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
                       </div>
                     ) : (
                       destinationQuery.length >= 2 && (
-                        <div className="p-6 text-center text-white/60">
-                          <MapPin className="w-8 h-8 mx-auto mb-3 text-white/40" />
+                        <div className="p-6 text-center text-gray-500">
+                          <MapPin className="w-8 h-8 mx-auto mb-3 text-gray-400" />
                           <p className="text-sm font-medium mb-2">No destinations found</p>
                           <p className="text-xs mb-3">AI couldn't find matches for "{destinationQuery}"</p>
                           <button
-                            className="text-xs text-blue-300 hover:text-blue-200 font-medium bg-blue-500/20 hover:bg-blue-500/30 px-3 py-2 rounded-lg transition-colors"
+                            className="text-xs text-blue-600 hover:text-blue-700 font-medium bg-blue-100 hover:bg-blue-200 px-3 py-2 rounded-lg transition-colors"
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={handleUseCustomDestination}
                           >
@@ -244,8 +253,8 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
 
             {/* AI Search Status */}
             {isSearching && destinationQuery.length >= 2 && (
-              <div className="mt-2 text-xs text-blue-300 flex items-center gap-2">
-                <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+              <div className="mt-2 text-xs text-blue-600 flex items-center gap-2">
+                <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                 <span>AI is searching for destinations...</span>
               </div>
             )}
@@ -253,7 +262,7 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
             {/* Dates */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="inline w-4 h-4 mr-1" />
                   Start Date
                 </label>
@@ -266,12 +275,12 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
                     const days = data.endDate ? calculateDays(newStartDate, data.endDate) : 1;
                     onUpdate({ ...data, startDate: newStartDate, numberOfDays: days });
                   }}
-                  className="w-full p-4 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 backdrop-blur-sm [color-scheme:dark]"
+                  className="w-full p-4 bg-white/70 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 backdrop-blur-sm"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="inline w-4 h-4 mr-1" />
                   End Date
                 </label>
@@ -284,15 +293,15 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
                     const days = data.startDate ? calculateDays(data.startDate, newEndDate) : 1;
                     onUpdate({ ...data, endDate: newEndDate, numberOfDays: days });
                   }}
-                  className="w-full p-4 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 backdrop-blur-sm [color-scheme:dark]"
+                  className="w-full p-4 bg-white/70 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 backdrop-blur-sm"
                 />
               </div>
             </div>
 
             {/* Number of Days Display */}
             {data.numberOfDays > 1 && (
-              <div className="p-4 bg-blue-500/20 rounded-xl border border-blue-400/30 backdrop-blur-sm">
-                <p className="text-blue-200 font-medium">
+              <div className="p-4 bg-blue-50/80 rounded-xl border border-blue-200 backdrop-blur-sm">
+                <p className="text-blue-700 font-medium">
                   Your trip is {data.numberOfDays} days long
                 </p>
               </div>
@@ -300,7 +309,7 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
 
             {/* Budget */}
             <div>
-              <label className="block text-sm font-medium text-white mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
                 <DollarSign className="inline w-4 h-4 mr-1" />
                 Budget Range
               </label>
@@ -311,14 +320,14 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
                     onClick={() => handleInputChange('budget', option.value as any)}
                     className={`p-4 rounded-xl border-2 transition-all duration-200 backdrop-blur-sm ${
                       data.budget === option.value
-                        ? 'border-blue-400 bg-blue-500/20 text-blue-200'
-                        : 'border-white/20 bg-white/5 text-white hover:border-white/30 hover:bg-white/10'
+                        ? 'border-blue-500 bg-blue-100/80 text-blue-700'
+                        : 'border-gray-300 bg-white/50 text-gray-700 hover:border-gray-400 hover:bg-white/70'
                     }`}
                   >
                     <div className="text-xl mb-2">{option.icon}</div>
                     <div className="font-medium text-sm">{option.value}</div>
                     <div className={`text-xs mt-1 ${
-                      data.budget === option.value ? 'text-blue-300' : 'text-white/60'
+                      data.budget === option.value ? 'text-blue-600' : 'text-gray-600'
                     }`}>{option.description}</div>
                   </button>
                 ))}
@@ -327,7 +336,7 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
 
             {/* Travel Group */}
             <div>
-              <label className="block text-sm font-medium text-white mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
                 <Users className="inline w-4 h-4 mr-1" />
                 Who's traveling?
               </label>
@@ -338,14 +347,14 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
                     onClick={() => handleInputChange('travelGroup', option.value as any)}
                     className={`p-4 rounded-xl border-2 transition-all duration-200 backdrop-blur-sm ${
                       data.travelGroup === option.value
-                        ? 'border-emerald-400 bg-emerald-500/20 text-emerald-200'
-                        : 'border-white/20 bg-white/5 text-white hover:border-white/30 hover:bg-white/10'
+                        ? 'border-emerald-500 bg-emerald-100/80 text-emerald-700'
+                        : 'border-gray-300 bg-white/50 text-gray-700 hover:border-gray-400 hover:bg-white/70'
                     }`}
                   >
                     <div className="text-xl mb-2">{option.icon}</div>
                     <div className="font-medium text-sm">{option.value}</div>
                     <div className={`text-xs mt-1 ${
-                      data.travelGroup === option.value ? 'text-emerald-300' : 'text-white/60'
+                      data.travelGroup === option.value ? 'text-emerald-600' : 'text-gray-600'
                     }`}>{option.description}</div>
                   </button>
                 ))}
@@ -354,31 +363,31 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
 
             {/* Special Considerations */}
             <div>
-              <label className="block text-sm font-medium text-white mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
                 Special Considerations
               </label>
               <div className="space-y-3">
-                <label className="flex items-center p-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-all duration-200 backdrop-blur-sm border border-white/10">
+                <label className="flex items-center p-3 bg-white/50 rounded-xl cursor-pointer hover:bg-white/70 transition-all duration-200 backdrop-blur-sm border border-gray-200">
                   <input
                     type="checkbox"
                     checked={data.includeKids}
                     onChange={(e) => handleInputChange('includeKids', e.target.checked)}
-                    className="mr-3 w-4 h-4 text-blue-500 bg-white/10 border-white/30 rounded focus:ring-blue-400 focus:ring-2"
+                    className="mr-3 w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                   />
-                  <span className="flex items-center text-white">
+                  <span className="flex items-center text-gray-700">
                     <span className="text-lg mr-2">👶</span>
                     Including children/kids
                   </span>
                 </label>
                 
-                <label className="flex items-center p-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-all duration-200 backdrop-blur-sm border border-white/10">
+                <label className="flex items-center p-3 bg-white/50 rounded-xl cursor-pointer hover:bg-white/70 transition-all duration-200 backdrop-blur-sm border border-gray-200">
                   <input
                     type="checkbox"
                     checked={data.includeElderly}
                     onChange={(e) => handleInputChange('includeElderly', e.target.checked)}
-                    className="mr-3 w-4 h-4 text-blue-500 bg-white/10 border-white/30 rounded focus:ring-blue-400 focus:ring-2"
+                    className="mr-3 w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                   />
-                  <span className="flex items-center text-white">
+                  <span className="flex items-center text-gray-700">
                     <span className="text-lg mr-2">👴</span>
                     Including elderly travelers
                   </span>
@@ -399,29 +408,30 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
         </div>
       </div>
     </div>
+    </div>
   );
 };
 
 const SuggestionItem: React.FC<SuggestionItemProps> = ({ suggestion, onSelect }) => {
   return (
     <button
-      className="w-full text-left p-3 hover:bg-blue-500/20 flex justify-between items-center transition-colors group border-b border-white/10 last:border-b-0"
+      className="w-full text-left p-3 hover:bg-blue-100/50 flex justify-between items-center transition-colors group border-b border-gray-200 last:border-b-0"
       onMouseDown={(e) => e.preventDefault()}
       onClick={() => onSelect(suggestion)}
     >
       <div className="flex items-center gap-3 min-w-0 flex-1">
-        <div className="w-8 h-8 bg-gradient-to-br from-blue-500/30 to-blue-600/30 rounded-full flex items-center justify-center flex-shrink-0">
-          <MapPin className="w-4 h-4 text-blue-300" />
+        <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center flex-shrink-0">
+          <MapPin className="w-4 h-4 text-blue-600" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="font-medium text-white group-hover:text-blue-200 truncate">
+          <div className="font-medium text-gray-800 group-hover:text-blue-700 truncate">
             {suggestion.name}
           </div>
-          <div className="text-xs text-white/60 truncate">
+          <div className="text-xs text-gray-600 truncate">
             {suggestion.country} • {suggestion.region}
           </div>
           {suggestion.description && (
-            <div className="text-xs text-white/50 truncate mt-1">
+            <div className="text-xs text-gray-500 truncate mt-1">
               {suggestion.description}
             </div>
           )}
@@ -429,12 +439,12 @@ const SuggestionItem: React.FC<SuggestionItemProps> = ({ suggestion, onSelect })
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         {suggestion.popular && (
-          <span className="text-xs bg-orange-500/20 text-orange-300 px-2 py-1 rounded-full">
+          <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
             Popular
           </span>
         )}
-        <div className="w-5 h-5 rounded-full bg-white/10 group-hover:bg-blue-500/30 flex items-center justify-center transition-colors">
-          <span className="text-xs text-white/60 group-hover:text-blue-200">→</span>
+        <div className="w-5 h-5 rounded-full bg-gray-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
+          <span className="text-xs text-gray-600 group-hover:text-blue-700">→</span>
         </div>
       </div>
     </button>
