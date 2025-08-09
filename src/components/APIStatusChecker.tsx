@@ -166,7 +166,7 @@ const APIStatusChecker: React.FC = () => {
           </div>
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <p className="text-blue-800">
-              <span className="font-medium">💡 Tip:</span> Add your API keys to the <code>.env</code> file and restart the development server.
+              <span className="font-medium">💡 Tip:</span> Add your API keys to the .env file and restart the development server.
               For Google APIs, add keys to Supabase Edge Functions environment variables to avoid CORS issues.
             </p>
           </div>
