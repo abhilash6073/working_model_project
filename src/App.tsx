@@ -10,7 +10,7 @@ import { aiService } from './services/aiService';
 import { generateMockItinerary } from './utils/mockData';
 import type { TravelInfo, TripPreferences, TripPlan } from './types';
 
-type AppStep = 'hero' | 'api-check' | 'places-setup' | 'travel-info' | 'preferences' | 'itinerary';
+type AppStep = 'hero' | 'travel-info' | 'preferences' | 'itinerary';
 
 function App() {
   const [currentStep, setCurrentStep] = useState<AppStep>('hero');
@@ -37,14 +37,6 @@ function App() {
   const [tripPlan, setTripPlan] = useState<TripPlan | null>(null);
 
   const handleStartPlanning = () => {
-    setCurrentStep('api-check');
-  };
-
-  const handleAPICheckComplete = () => {
-    setCurrentStep('places-setup');
-  };
-
-  const handlePlacesSetupComplete = () => {
     setCurrentStep('travel-info');
   };
 
@@ -294,47 +286,6 @@ function App() {
         <Hero onGetStarted={handleStartPlanning} />
       )}
 
-      {currentStep === 'api-check' && (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 py-12 px-4">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-white mb-4">API Configuration Check</h1>
-            <p className="text-white/80 mb-6">Let's verify your API keys for full functionality</p>
-          </div>
-          <APIStatusChecker />
-          <div className="mt-8 text-center">
-            <button
-              onClick={handleAPICheckComplete}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              Configure Places API →
-            </button>
-          </div>
-        </div>
-      )}
-
-      {currentStep === 'places-setup' && (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 py-12 px-4">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-white mb-4">Google Places API Setup</h1>
-            <p className="text-white/80 mb-6">Configure Places API for real photos and enhanced location data</p>
-          </div>
-          <PlacesAPISetup />
-          <div className="mt-8 text-center space-x-4">
-            <button
-              onClick={() => setCurrentStep('api-check')}
-              className="px-6 py-3 bg-gray-600 text-white font-semibold rounded-xl hover:bg-gray-700 transition-all duration-200"
-            >
-              ← Back to API Check
-            </button>
-            <button
-              onClick={handlePlacesSetupComplete}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              Continue to Trip Planning →
-            </button>
-          </div>
-        </div>
-      )}
 
       {currentStep === 'travel-info' && (
         <div className="min-h-screen py-12 px-4">
@@ -382,7 +333,7 @@ function App() {
       )}
 
       {/* Progress Indicator */}
-      {currentStep !== 'hero' && currentStep !== 'api-check' && currentStep !== 'places-setup' && (
+      {currentStep !== 'hero' && (
         <div className="fixed top-0 left-0 right-0 bg-white shadow-sm z-40">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between text-sm">
