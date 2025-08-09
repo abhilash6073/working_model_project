@@ -408,6 +408,7 @@ const TravelInfoForm: React.FC<TravelInfoFormProps> = ({ data, onUpdate, onNext 
         </div>
       </div>
     </div>
+    </div>
   );
 };
 
